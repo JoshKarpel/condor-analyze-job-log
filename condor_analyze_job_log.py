@@ -4,7 +4,6 @@ import math
 from pathlib import Path
 import sys
 import collections
-from dataclasses import dataclass
 import datetime
 import enum
 import shutil
@@ -153,19 +152,24 @@ def histogram(counts_over_time, width, height):
 def calculate_column_partition(counts, max_jobs, height):
     raw_split = [(counts.get(status, 0) / max_jobs) * height for status in JobStatus]
 
-    int_split = [None] * len(raw_split)
+    int_split = [0 for _ in range(len(raw_split))]
+    carry = 0
     for idx, entry in enumerate(raw_split):
         dec = entry - math.floor(entry)
 
         if entry == 0:
             int_split[idx] = 0
+        elif dec >= 0.5:
+            int_split[idx] = math.ceil(entry)
         elif math.floor(entry) == 0:
             int_split[idx] = 1
-            continue
-        elif dec <= 0.5:
+            carry += 1
+        elif dec < 0.5:
             int_split[idx] = math.floor(entry)
-        elif dec > 0.5:
-            int_split[idx] = math.ceil(entry)
+        else:
+            raise Exception("Unreachable")
+
+    int_split[int_split.index(max(int_split))] -= carry
 
     return {k: v for k, v in zip(JobStatus, int_split)}
 
@@ -207,7 +211,7 @@ def avg_counts(counts_over_time):
 
     counts = [counts for _, counts in counts_over_time]
 
-    return collections.Counter({k: round(v / lc) for k, v in sum(counts, collections.Counter()).items()})
+    return collections.Counter({k: v / lc for k, v in sum(counts, collections.Counter()).items()})
 
 
 if __name__ == '__main__':
