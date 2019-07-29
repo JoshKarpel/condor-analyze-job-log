@@ -89,7 +89,6 @@ def main(event_log_path):
     right_date_str = datetime.datetime.fromtimestamp(last_time).strftime('%y-%m-%d %H:%M:%S').rjust(width + 1)
     time_str = 'Time'.center(width + 1)
     rows.append(merge_strings(left_date_str, right_date_str, time_str))
-    # rows.append(f'{left_date_str}{" " * (width - len(left_date_str) - len(right_date_str) + 1)}{right_date_str}')
 
     max_jobs = max(total_counts(c) for _, c in counts_over_time)
 
@@ -130,7 +129,9 @@ def histogram(counts_over_time, width, height):
     first_time, _ = counts_over_time[0]
     last_time, last_counts = counts_over_time[-1]
 
-    counts = [avg_counts(group) for group in group_counts_by_time(counts_over_time, width)]
+    groups = list(group_counts_by_time(counts_over_time, width))
+    counts = [avg_counts(group) for group in groups]
+    counts[0] = groups[0][-1][1]
     counts[-1] = last_counts
 
     max_jobs = max(total_counts(c) for c in counts if c is not None)
